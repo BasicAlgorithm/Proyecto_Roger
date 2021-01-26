@@ -55,7 +55,7 @@ namespace EDA {
 				b = tmp;
 			}
 
-			bool search(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) {
+			bool search(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) const {
 				//std::cout << " V = " << valorABuscar;
 				if (!nodoActual) nodoActual = rootNodo;
 				int i = 0;
