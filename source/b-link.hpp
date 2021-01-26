@@ -7,8 +7,7 @@
 #include <iostream>
 #include <string>
 
-//#define CANTIDAD_PUNTEROS_MAX 4
-#define MAX 6 //CANTIDAD_PUNTEROS_MAX+1
+#define MAX 6 //sometimes we need more space before split and avoid find out null pointers
 
 namespace EDA {
 	namespace Concurrent {
@@ -37,11 +36,13 @@ namespace EDA {
 
 			BLinkTree() {}
 
-			~BLinkTree() {}
+			~BLinkTree() { delete[] rootNodo; }
 
-			std::size_t size() const {}
+			std::size_t size() const { return size; }
 
-			bool empty() const {}
+			bool empty() const {
+				if (rootNodo->cantidadHijos) return true; else { return false; }
+			}
 
 			void swap(data_type& a, data_type& b) {
 				data_type tmp = a;
@@ -144,7 +145,7 @@ namespace EDA {
 					}
 					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = nodoDerecho;
 
-					for (tmp01 = 0;nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
+					for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
 						//std::cout << "tmp01 " << tmp01 << std::endl;
 						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
 					}
@@ -201,7 +202,7 @@ namespace EDA {
 					rootNodo = nodoPadre;
 					return;
 				}
-				else {   
+				else {
 
 					nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
 
@@ -229,15 +230,16 @@ namespace EDA {
 
 			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {//const data_type& 
 				//std::cout << " |direct_insert_id=" + mensaje + "_val_"<<val<<"| ";
-				if (search(valueToInsert,mensaje)) {
+				if (search(valueToInsert, mensaje)) {
 					//std::cout << " |Reyect_" << valueToInsert <<"_id_"<< mensaje <<"| "<< "\n";
-					return; }
+					return;
+				}
 				if (mensaje != "not_print")std::cout << " valorIngresado_insert = " << valueToInsert << " ID = " << mensaje << "\n";
 				if (!nodoWorkerIzquierdo) nodoWorkerIzquierdo = rootNodo;
 
 				for (data_type tmpIndex = 0; tmpIndex <= nodoWorkerIzquierdo->cantidadHijos; tmpIndex++) {
 					if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
-						insert(valueToInsert, mensaje,nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
+						insert(valueToInsert, mensaje, nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
 						if (nodoWorkerIzquierdo->cantidadHijos == CANTIDAD_PUNTEROS_MAX)
 							separadorConHijos(nodoWorkerIzquierdo);
 						return;
@@ -272,13 +274,14 @@ namespace EDA {
 					std::cout << "{";
 					data_type tmpIndex;
 					for (tmpIndex = 0; tmpIndex < nodoImprimiendose->cantidadHijos; tmpIndex++) {
-						if (nodoImprimiendose->arrayPunterosHijos[tmpIndex]) { 
+						if (nodoImprimiendose->arrayPunterosHijos[tmpIndex]) {
 							vectorSiguienteParaImprimir.push_back(nodoImprimiendose->arrayPunterosHijos[tmpIndex]);
-							std::cout << "[P]"; }
-						else{ std::cout << "[N]";}
+							std::cout << "[P]";
+						}
+						else { std::cout << "[N]"; }
 
 						std::cout << nodoImprimiendose->arrayValoresHijos[tmpIndex] << "";
-						
+
 					}
 					if (nodoImprimiendose->arrayValoresHijos[tmpIndex] == INT_MAX && nodoImprimiendose->arrayPunterosHijos[tmpIndex]) {
 						std::cout << "[P]";
@@ -306,19 +309,27 @@ namespace EDA {
 			}
 
 			void print() {
-				std::cout << "\n ---------------------------------------------------------------------------------------------------------- " << "\n";
-				std::cout << "                                     PRINT OF B-LINK TREE "<< "\n";
-				std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
-				std::vector < Nodo* > toPrint;
-				toPrint.clear();
-				toPrint.push_back(rootNodo);
-				real_print(toPrint);
-				std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
-
+				if (empty()) {
+					std::cout << "\n ---------------------- " << "\n";
+					std::cout << "     B-LINK TREE EMPTY" << "\n";
+					std::cout << "\n ---------------------- " << "\n";
+				}
+				else
+				{
+					std::cout << "\n ---------------------------------------------------------------------------------------------------------- " << "\n";
+					std::cout << "                                     PRINT OF B-LINK TREE " << "\n";
+					std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
+					std::vector < Nodo* > toPrint;
+					toPrint.clear();
+					toPrint.push_back(rootNodo);
+					real_print(toPrint);
+					std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
+				}
 			}
 
 			Nodo* rootNodo = new Nodo();
 			int CANTIDAD_PUNTEROS_MAX = B + 1;
+			data_type cantidadDatos;
 		};
 
 	}  // namespace Concurrent
