@@ -8,7 +8,7 @@
 #include <string>
 
 //#define CANTIDAD_PUNTEROS_MAX 4
-#define MAX 10 //CANTIDAD_PUNTEROS_MAX+1
+#define MAX 6 //CANTIDAD_PUNTEROS_MAX+1
 
 namespace EDA {
 	namespace Concurrent {
@@ -64,10 +64,10 @@ namespace EDA {
 						if (mensaje != "not_print")std::cout << " |found_it/id=" << mensaje << "/value=" << valorABuscar << "| ";
 						return true;
 					}
-					if (valorABuscar < nodoActual->arrayValoresHijos[i] && nodoActual->arrayPunterosHijos[i] != NULL) {
+					if (valorABuscar < nodoActual->arrayValoresHijos[i] && nodoActual->arrayPunterosHijos[i]) {
 						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[i]);
 					}
-					else if (valorABuscar < nodoActual->arrayValoresHijos[i] && nodoActual->arrayPunterosHijos[i] == NULL) {
+					else if (valorABuscar < nodoActual->arrayValoresHijos[i] && !nodoActual->arrayPunterosHijos[i]) {
 						//std::cout << " |NO_1_id_" << mensaje << "_" << valorABuscar << "_| ";
 						return false;
 					}
@@ -94,17 +94,15 @@ namespace EDA {
 				nodoDerecho->cantidadHijos = CANTIDAD_PUNTEROS_MAX - cantidadHijosALosLados;
 				nodoDerecho->nodoPadre = nodoWorkerIzquierdo->nodoPadre;
 
-				//COPY VALUE FROM LEFT TO RIGH
 				for (tmp01 = cantidadHijosALosLados, tmp02 = 0; tmp01 < CANTIDAD_PUNTEROS_MAX; tmp01++, tmp02++) {
 					nodoDerecho->arrayValoresHijos[tmp02] = nodoWorkerIzquierdo->arrayValoresHijos[tmp01];
 					nodoWorkerIzquierdo->arrayValoresHijos[tmp01] = INT_MAX;
 				}
 
-				//VALUE FOR PARENT
 				data_type valorQueAsciende = nodoDerecho->arrayValoresHijos[0];
 
 				//SI NO HAY PADRE
-				if (nodoWorkerIzquierdo->nodoPadre == NULL) {
+				if (!nodoWorkerIzquierdo->nodoPadre) {
 					Nodo* nodoPadre = new Nodo();
 					nodoPadre->nodoPadre = NULL;
 					nodoPadre->cantidadHijos = 1;
@@ -121,10 +119,6 @@ namespace EDA {
 
 					nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
 
-					Nodo* newChildBlock = new Nodo();
-					newChildBlock = nodoDerecho;
-
-
 					for (tmp01 = 0; tmp01 <= nodoWorkerIzquierdo->cantidadHijos; tmp01++) {
 						if (valorQueAsciende < nodoWorkerIzquierdo->arrayValoresHijos[tmp01]) {
 							swap(nodoWorkerIzquierdo->arrayValoresHijos[tmp01], valorQueAsciende);
@@ -133,22 +127,19 @@ namespace EDA {
 
 					nodoWorkerIzquierdo->cantidadHijos++;
 
-
 					for (tmp01 = 0; tmp01 < nodoWorkerIzquierdo->cantidadHijos; tmp01++) {
-						if (newChildBlock->arrayValoresHijos[0] < nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0]) {
+						if (nodoDerecho->arrayValoresHijos[0] < nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0]) {
 							//std::cout << "A " << nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0] << std::endl;
 							//std::cout << "B "<<newChildBlock->arrayValoresHijos[0] <<std::endl;
-							swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], newChildBlock);
+							swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], nodoDerecho);
 							//std::cout << "A " << nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0] << std::endl;
 							//std::cout << "B " << newChildBlock->arrayValoresHijos[0] << std::endl;
 						}
 					}
-					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = newChildBlock;
+					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = nodoDerecho;
 
-					//ACTUALIZANDO HIJOS
-					for (tmp01 = 0; tmp01 < MAX && nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] != NULL; tmp01++) {
+					for (tmp01 = 0;nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
 						//std::cout << "tmp01 " << tmp01 << std::endl;
-
 						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
 					}
 				}
@@ -156,7 +147,7 @@ namespace EDA {
 			}
 
 			void separadorConHijos(Nodo* nodoWorkerIzquierdo) {
-				int cantidadHijosALosLados, tmp01, tmp02;
+				data_type cantidadHijosALosLados, tmp01, tmp02;
 
 				cantidadHijosALosLados = CANTIDAD_PUNTEROS_MAX / 2;
 
@@ -175,52 +166,33 @@ namespace EDA {
 				}
 
 				data_type valorQueAsciende = nodoDerecho->arrayValoresHijos[0];
-				//just right-shift arrayValoresHijos[] and arrayPunterosHijos[] by one from nodoDerecho
-				//to have no repeat of the first item for non-leaf Nodo
 				memcpy(&nodoDerecho->arrayValoresHijos, &nodoDerecho->arrayValoresHijos[1], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
 				memcpy(&nodoDerecho->arrayPunterosHijos, &nodoDerecho->arrayPunterosHijos[1], sizeof(rootNodo) * (nodoDerecho->cantidadHijos + 1));
 
-				//we reordered some values and positions so don't forget
-				//to assign the children's exact parent
 
-				for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] != NULL; tmp01++) {
+				for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
 					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
 				}
-				for (tmp01 = 0; nodoDerecho->arrayPunterosHijos[tmp01] != NULL; tmp01++) {
+				for (tmp01 = 0; nodoDerecho->arrayPunterosHijos[tmp01]; tmp01++) {
 					nodoDerecho->arrayPunterosHijos[tmp01]->nodoPadre = nodoDerecho;
 				}
 
-				if (nodoWorkerIzquierdo->nodoPadre == NULL) {
-					//create a new parent
+				if (!nodoWorkerIzquierdo->nodoPadre) {
 					Nodo* nodoPadre = new Nodo();
-					//parent should have a null parent
 					nodoPadre->nodoPadre = NULL;
-					//parent will have only one node
 					nodoPadre->cantidadHijos = 1;
-					//the only arrayValoresHijos is the valorQueAsciende
 					nodoPadre->arrayValoresHijos[0] = valorQueAsciende;
-					//it has two children, leftBlock and nodoDerecho
 					nodoPadre->arrayPunterosHijos[0] = nodoWorkerIzquierdo;
 					nodoPadre->arrayPunterosHijos[1] = nodoDerecho;
 
-					//and both nodoDerecho and leftBlock has no longer null parent, they have their new parent
 					nodoWorkerIzquierdo->nodoPadre = nodoDerecho->nodoPadre = nodoPadre;
 
-					//from now on this new parent is the root parent
 					rootNodo = nodoPadre;
 					return;
 				}
-				else {   //if the splitted leaf block is not rootNodo then
+				else {   
 
-					// we have to put the valorQueAsciende and assign the nodoDerecho to the right place in the nodoPadre
-					// so we go to the nodoPadre and from now we consider the nodoWorkerIzquierdo as the nodoPadre of the splitted Nodo
 					nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
-
-
-					Nodo* newChildBlock = new Nodo();
-					newChildBlock = nodoDerecho;
-
-
 
 					for (tmp01 = 0; tmp01 <= nodoWorkerIzquierdo->cantidadHijos; tmp01++) {
 						if (valorQueAsciende < nodoWorkerIzquierdo->arrayValoresHijos[tmp01]) {
@@ -230,40 +202,39 @@ namespace EDA {
 
 					nodoWorkerIzquierdo->cantidadHijos++;
 
-
 					for (tmp01 = 0; tmp01 < nodoWorkerIzquierdo->cantidadHijos; tmp01++) {
-						if (newChildBlock->arrayValoresHijos[0] < nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0]) {
-							swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], newChildBlock);
+						if (nodoDerecho->arrayValoresHijos[0] < nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->arrayValoresHijos[0]) {
+							swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], nodoDerecho);
 						}
 					}
-					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = newChildBlock;
+					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = nodoDerecho;
 
-					for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] != NULL; tmp01++) {
+					for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
 						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
 					}
 				}
 
 			}
 
-			void insert(data_type val, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {//const data_type& 
+			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {//const data_type& 
 				//std::cout << " |direct_insert_id=" + mensaje + "_val_"<<val<<"| ";
-				if (search(val,mensaje)) { 
+				if (search(valueToInsert,mensaje)) {
 					//std::cout << " |Reyect_" << val <<"_id_"<< mensaje <<"| "<< "\n";
 					return; }
 				//std::cout << " valorIngresado_insert = " << val << "\n";
 				if (!nodoWorkerIzquierdo) nodoWorkerIzquierdo = rootNodo;
 
-				for (data_type i = 0; i <= nodoWorkerIzquierdo->cantidadHijos; i++) {
-					if (val < nodoWorkerIzquierdo->arrayValoresHijos[i] && nodoWorkerIzquierdo->arrayPunterosHijos[i] != NULL) {
-						insert(val, mensaje,nodoWorkerIzquierdo->arrayPunterosHijos[i]);
+				for (data_type tmpIndex = 0; tmpIndex <= nodoWorkerIzquierdo->cantidadHijos; tmpIndex++) {
+					if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
+						insert(valueToInsert, mensaje,nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
 						if (nodoWorkerIzquierdo->cantidadHijos == CANTIDAD_PUNTEROS_MAX)
 							separadorConHijos(nodoWorkerIzquierdo);
 						return;
 					}
-					else if (val < nodoWorkerIzquierdo->arrayValoresHijos[i] && nodoWorkerIzquierdo->arrayPunterosHijos[i] == NULL) {
-						swap(nodoWorkerIzquierdo->arrayValoresHijos[i], val);
+					else if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && !nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
+						swap(nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex], valueToInsert);
 						//swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], newChildBlock);
-						if (i == nodoWorkerIzquierdo->cantidadHijos) {
+						if (tmpIndex == nodoWorkerIzquierdo->cantidadHijos) {
 							nodoWorkerIzquierdo->cantidadHijos++;
 							break;
 						}

@@ -10,7 +10,7 @@
 
 std::size_t NUMBER_THREADS = 8;//8
 
-const std::size_t NUMBER_OPERATIONS = 25;//10000
+const std::size_t NUMBER_OPERATIONS = 100000;//10000
 
 int MIN_VALUE = 1;
 int MAX_VALUE = 50;//15000
@@ -28,7 +28,8 @@ public:
 		std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
 		for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
 			//std::cout << distribution(rd) << "\n";
-			std::string mensaje = std::to_string(i);
+			//std::string mensaje = std::to_string(i); to know id
+			std::string mensaje = "not_print"; // to avoid print
 			b_link_->search(distribution(rd), mensaje);
 		}
 	}
@@ -57,7 +58,7 @@ void run_test() {
 
 	sequential_insert(&b_link);
 
-	b_link.print();
+	//b_link.print();
 
 	std::thread* threads = new std::thread[NUMBER_THREADS];
 
