@@ -10,7 +10,7 @@
 
 std::size_t NUMBER_THREADS = 8;//8
 
-const std::size_t NUMBER_OPERATIONS = 100000;//10000
+const std::size_t NUMBER_OPERATIONS = 15;//10000
 
 int MIN_VALUE = 1;
 int MAX_VALUE = 50;//15000
@@ -41,16 +41,86 @@ private:
 
 void sequential_insert(EDA::Concurrent::BLinkTree<3, int>* b_link) {
 	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
+	
+	/*
+	//RANDOM INSERT
 	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
-		//std::cout << "seq " << distribution(rd) << "\n";
-		//std::cout << "A seq "<<i+1<<std::endl;
+		
+		// to track operation_id
+		std::string mensaje = std::to_string(i);
 
-		//std::string mensaje = std::to_string(i); to track operation_id
-		std::string mensaje = "not_print"; // to avoid print repeteded insert
-
+		// to avoid print repeteded insert with ***SI***
+		//std::string mensaje = "not_print"; 
+		
 		b_link->insert(distribution(rd),mensaje);
+	}//RANDOM INSERT
+	*/
+	
+	//TEST UNIT
+	std::string mensaje = "not_print"; // to avoid print repeteded insert with ***SI***
+	b_link->insert(19, mensaje);
+	b_link->insert(31, mensaje);
+	b_link->insert(34, mensaje);
+	b_link->insert(2, mensaje);
+	b_link->insert(46, mensaje);
+	b_link->insert(11, mensaje);
+	b_link->insert(15, mensaje);
+	b_link->insert(27, mensaje);
+	b_link->insert(5, mensaje);
+	b_link->insert(5, mensaje);
+	b_link->insert(23, mensaje);
+	b_link->insert(38, mensaje);
+	b_link->insert(38, mensaje);
+	b_link->insert(37, mensaje);
+	b_link->insert(16, mensaje);
 
-	}
+	std::cout << "TEST 00:   |<espected print>| \n \n"
+		<< "{[P]31[P]} \n \n"
+		<< "{[P]15[P]23[P]} {[P]38[P]} \n \n"
+		<< "{[N]2[N]5[N]11[N]}  {[N]15[N]16[N]19[N]}  {[N]23[N]27[N]}  {[N]31[N]34[N]37[N]}  {[N]38[N]46[N]} \n"
+		<< std::endl;
+
+	std::cout << "TEST 01: print horizontal nivel 02\n    |<espected> 15 23 38 |    " 
+		<< " |<actual> "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayValoresHijos[1]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->link->arrayValoresHijos[0]
+		<< "|"
+		<<std::endl << std::endl;
+
+	std::cout << "TEST 02: print horizontal nivel 01\n    |<espected> 2 5 11 15 16 19 23 27 31 34 37 38 46 |    "
+		<< " |<actual> "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->arrayValoresHijos[1]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->arrayValoresHijos[2]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->arrayValoresHijos[1]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->arrayValoresHijos[2]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->arrayValoresHijos[1]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->link->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->link->arrayValoresHijos[1]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->link->arrayValoresHijos[2]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->link->link->arrayValoresHijos[0]
+		<< " "
+		<< b_link->rootNodo->arrayPunterosHijos[0]->arrayPunterosHijos[0]->link->link->link->link->arrayValoresHijos[1]
+		<< "|"
+		<< std::endl;
+	//TEST UNIT
+	
 }
 
 void run_test() {
@@ -58,7 +128,9 @@ void run_test() {
 
 	sequential_insert(&b_link);
 
-	//b_link.print();
+	//UNCOMMENT PRINT b-link tree
+	b_link.print();
+	//UNCOMMENT PRINT b-link tree
 
 	std::thread* threads = new std::thread[NUMBER_THREADS];
 

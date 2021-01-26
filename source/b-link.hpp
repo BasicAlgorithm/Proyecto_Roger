@@ -21,11 +21,13 @@ namespace EDA {
 			struct Nodo {
 				data_type cantidadHijos;
 				Nodo* nodoPadre;
+				Nodo* link;
 				data_type arrayValoresHijos[MAX];
 				Nodo* arrayPunterosHijos[MAX];
 				Nodo() {
 					cantidadHijos = 0;
 					nodoPadre = NULL;
+					link = NULL;
 					for (data_type i = 0; i < MAX; i++) {
 						arrayValoresHijos[i] = INT_MAX;
 						arrayPunterosHijos[i] = NULL;
@@ -98,6 +100,10 @@ namespace EDA {
 					nodoDerecho->arrayValoresHijos[tmp02] = nodoWorkerIzquierdo->arrayValoresHijos[tmp01];
 					nodoWorkerIzquierdo->arrayValoresHijos[tmp01] = INT_MAX;
 				}
+				//B-LINK IMPLEMENTATION
+				if (nodoWorkerIzquierdo->link) nodoDerecho->link = nodoWorkerIzquierdo->link;
+				nodoWorkerIzquierdo->link = nodoDerecho;
+				//B-LINK IMPLEMENTATION
 
 				data_type valorQueAsciende = nodoDerecho->arrayValoresHijos[0];
 
@@ -165,6 +171,11 @@ namespace EDA {
 					if (tmp01 != cantidadHijosALosLados)nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = NULL;
 				}
 
+				//B-LINK IMPLEMENTATION
+				if (nodoWorkerIzquierdo->link) nodoDerecho->link = nodoWorkerIzquierdo->link;
+				nodoWorkerIzquierdo->link = nodoDerecho;
+				//B-LINK IMPLEMENTATION
+
 				data_type valorQueAsciende = nodoDerecho->arrayValoresHijos[0];
 				memcpy(&nodoDerecho->arrayValoresHijos, &nodoDerecho->arrayValoresHijos[1], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
 				memcpy(&nodoDerecho->arrayPunterosHijos, &nodoDerecho->arrayPunterosHijos[1], sizeof(rootNodo) * (nodoDerecho->cantidadHijos + 1));
@@ -219,9 +230,9 @@ namespace EDA {
 			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {//const data_type& 
 				//std::cout << " |direct_insert_id=" + mensaje + "_val_"<<val<<"| ";
 				if (search(valueToInsert,mensaje)) {
-					//std::cout << " |Reyect_" << val <<"_id_"<< mensaje <<"| "<< "\n";
+					//std::cout << " |Reyect_" << valueToInsert <<"_id_"<< mensaje <<"| "<< "\n";
 					return; }
-				//std::cout << " valorIngresado_insert = " << val << "\n";
+				if (mensaje != "not_print")std::cout << " valorIngresado_insert = " << valueToInsert << " ID = " << mensaje << "\n";
 				if (!nodoWorkerIzquierdo) nodoWorkerIzquierdo = rootNodo;
 
 				for (data_type tmpIndex = 0; tmpIndex <= nodoWorkerIzquierdo->cantidadHijos; tmpIndex++) {
@@ -291,15 +302,19 @@ namespace EDA {
 
 					real_print(vectorSiguienteParaImprimir);
 				}
-				std::cout << std::endl;
 
 			}
 
 			void print() {
+				std::cout << "\n ---------------------------------------------------------------------------------------------------------- " << "\n";
+				std::cout << "                                     PRINT OF B-LINK TREE "<< "\n";
+				std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
 				std::vector < Nodo* > toPrint;
 				toPrint.clear();
 				toPrint.push_back(rootNodo);
 				real_print(toPrint);
+				std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
+
 			}
 
 			Nodo* rootNodo = new Nodo();
