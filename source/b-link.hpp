@@ -57,20 +57,18 @@ namespace EDA {
 			}
 
 			bool search(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) const {
-				//std::cout << " V = " << valorABuscar;
-				if (!nodoActual) nodoActual = rootNodo;
-				int i = 0;
-				for (; i <= nodoActual->cantidadHijos; i++) {
-					//std::cout << " |iteracion= " << i<<"|";
+				if (!nodoActual) nodoActual = rootNodo; // only once over here
+				
+				for (int tmpIndex = 0; tmpIndex <= nodoActual->cantidadHijos; tmpIndex++) {
 
-					if (valorABuscar == nodoActual->arrayValoresHijos[i]) {
+					if (valorABuscar == nodoActual->arrayValoresHijos[tmpIndex]) {
 						if (mensaje != "not_print")std::cout << " |found_it/id=" << mensaje << "/value=" << valorABuscar << "| ";
 						return true;
 					}
-					if (valorABuscar < nodoActual->arrayValoresHijos[i] && nodoActual->arrayPunterosHijos[i]) {
-						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[i]);
+					if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && nodoActual->arrayPunterosHijos[tmpIndex]) {
+						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[tmpIndex]);
 					}
-					else if (valorABuscar < nodoActual->arrayValoresHijos[i] && !nodoActual->arrayPunterosHijos[i]) {
+					else if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && !nodoActual->arrayPunterosHijos[tmpIndex]) {
 						//std::cout << " |NO_1_id_" << mensaje << "_" << valorABuscar << "_| ";
 						return false;
 					}
@@ -146,7 +144,6 @@ namespace EDA {
 					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = nodoDerecho;
 
 					for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
-						//std::cout << "tmp01 " << tmp01 << std::endl;
 						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
 					}
 				}
@@ -189,7 +186,7 @@ namespace EDA {
 					nodoDerecho->arrayPunterosHijos[tmp01]->nodoPadre = nodoDerecho;
 				}
 
-				if (!nodoWorkerIzquierdo->nodoPadre) {
+				if (!nodoWorkerIzquierdo->nodoPadre) { //SI NO HAY PADRE
 					Nodo* nodoPadre = new Nodo();
 					nodoPadre->nodoPadre = NULL;
 					nodoPadre->cantidadHijos = 1;
@@ -202,7 +199,7 @@ namespace EDA {
 					rootNodo = nodoPadre;
 					return;
 				}
-				else {
+				else { //SI HAY PADRE
 
 					nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
 
@@ -246,7 +243,6 @@ namespace EDA {
 					}
 					else if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && !nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
 						swap(nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex], valueToInsert);
-						//swap(nodoWorkerIzquierdo->arrayPunterosHijos[tmp01], newChildBlock);
 						if (tmpIndex == nodoWorkerIzquierdo->cantidadHijos) {
 							nodoWorkerIzquierdo->cantidadHijos++;
 							break;
