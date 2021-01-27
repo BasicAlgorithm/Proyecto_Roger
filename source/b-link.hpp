@@ -38,7 +38,7 @@ namespace EDA {
 
 			~BLinkTree() { delete[] rootNodo; }
 
-			std::size_t size() const { return size; }
+			std::size_t size() const { return cantidadDatos; }
 
 			bool empty() const {
 				if (rootNodo->cantidadHijos) return true; else { return false; }

@@ -1,1 +1,7 @@
 build
+x64
+pch.h
+pch.cpp
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
