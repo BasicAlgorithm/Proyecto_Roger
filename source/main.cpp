@@ -1,16 +1,17 @@
-// Copyright 2021 Roger Peralta Aranibar
+﻿// Copyright 2021 Roger Peralta Aranibar
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
 #include <random>
 #include <thread>
 #include <string>
+#include <sstream>
 
 #include "b-link.hpp"
 
 std::size_t NUMBER_THREADS = 8;
 
-const std::size_t NUMBER_OPERATIONS = 10000;
+const std::size_t NUMBER_OPERATIONS = 100000;
 
 int MIN_VALUE = 1;
 int MAX_VALUE = 15000;
@@ -142,7 +143,167 @@ void run_test() {
 	}
 }
 
+//FINAL TEST ALL ABOVE FROM HERE
+
+void parallel_insert(EDA::Concurrent::BLinkTree<3, int>* b_link) {
+	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
+	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
+		int value = distribution(rd);
+		//std::cout << value << "| \n";
+		
+		// to track operation_id
+		//std::string mensaje = std::to_string(i) + "_inserter";
+
+		// to avoid print repeteded insert with ***SI***
+		std::string mensaje = "not_print";
+
+		b_link->insert(value,mensaje);
+	}
+}
+
+void parallel_search(EDA::Concurrent::BLinkTree<3, int>* b_link) {
+	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
+	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
+		int value = distribution(rd);
+		//std::cout << value << "* \n
+
+		// to track operation_id
+		//std::string mensaje = std::to_string(i) +"_searcher";
+
+		// to avoid print repeteded insert with ***SI***
+		std::string mensaje = "not_print";
+
+		b_link->search(value,mensaje);
+	}
+}
+
+void run_parallel_asynchronous_test() {
+	EDA::Concurrent::BLinkTree<3, int> b_link;
+
+	std::thread* insert_threads = new std::thread[NUMBER_THREADS];
+	std::thread* search_threads = new std::thread[NUMBER_THREADS];
+
+	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
+		insert_threads[i] = std::thread(parallel_insert, &b_link);
+		search_threads[i] = std::thread(parallel_search, &b_link);
+	}
+	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
+		insert_threads[i].join();
+		search_threads[i].join();
+	}
+}
+
+int* LAST_VALUE_INSERTED;
+std::mutex* MUTEX;
+std::condition_variable* VALUE_INSERTED;
+
+//NEW IMPLEMENTATION
+//bool ready = false;
+//bool processed = false;
+//NEW IMPLEMENTATION
+
+void insert_and_notify(EDA::Concurrent::BLinkTree<3, int>* b_link, int id) {
+	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
+	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
+		std::unique_lock<std::mutex> lock(MUTEX[id]); 
+		
+		//NEW IMPLEMENTATION
+		//ready = true;
+		//NEW IMPLEMENTATION
+
+		int value = distribution(rd);
+
+		// to track operation_id
+		//std::string mensaje = std::to_string(id) + "_inserter";
+
+		// to avoid print repeteded insert with ***SI***
+		std::string mensaje = "not_print";
+
+		b_link->insert(value, mensaje);
+		
+		LAST_VALUE_INSERTED[id] = value;
+		//std::cout << "inserted: " <<LAST_VALUE_INSERTED[id] << "\n";
+		VALUE_INSERTED[id].notify_one();
+
+		//NEW IMPLEMENTATION
+		//{
+		//	std::unique_lock<std::mutex> lock(MUTEX[id]);
+		//	VALUE_INSERTED[id].wait(lock, [] {return processed; });
+		//	processed = false;
+		//}
+		//NEW IMPLEMENTATION
+
+	}
+	std::stringstream stream;
+	stream << " Insert finished for thread: " << id << "\n";
+	std::cout << stream.str() << "\n";
+}
+
+void search_when_notified(EDA::Concurrent::BLinkTree<3, int>* b_link, int id) {
+	while (true) {
+		//std::cout<<"----------------------------------------------------------- HERE"<<std::endl;
+		std::unique_lock<std::mutex> lock(MUTEX[id]);
+		VALUE_INSERTED[id].wait(lock);
+
+		//NEW IMPLEMENTATION
+		//VALUE_INSERTED[id].wait(lock, [] {return ready; });
+		//NEW IMPLEMENTATION
+
+		//std::cout << "----------------------------------------------------------- INSIDE" << std::endl;
+
+		//std::cout << "Searcher: " << LAST_VALUE_INSERTED[id] << "\n";
+		
+		// to track operation_id
+		//std::string mensaje = std::to_string(id) + "_searcher";
+
+		// to avoid print repeteded insert with ***SI***
+		std::string mensaje = "not_print";
+
+		if (!b_link->search(LAST_VALUE_INSERTED[id], mensaje)) {
+		//std::cout << LAST_VALUE_INSERTED[id] << "\n";
+		  std::stringstream stream;
+		 stream << " Value not found in B Link: " << LAST_VALUE_INSERTED[id]<< "\n";
+		  std::cerr << stream.str() << "\n";
+		}
+
+		//NEW IMPLEMENTATION
+		//ready = false;
+		//processed = true;
+		//lock.unlock();
+		//VALUE_INSERTED[id].notify_one();
+		//NEW IMPLEMENTATION
+	}
+}
+
+void run_parallel_synchronous_test() {
+	LAST_VALUE_INSERTED = new int[NUMBER_THREADS];
+	MUTEX = new std::mutex[NUMBER_THREADS];
+	VALUE_INSERTED = new std::condition_variable[NUMBER_THREADS];
+
+	EDA::Concurrent::BLinkTree<3, int> b_link;
+
+	std::thread* insert_threads = new std::thread[NUMBER_THREADS];
+	std::thread* search_threads = new std::thread[NUMBER_THREADS];
+
+	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
+		search_threads[i] = std::thread(search_when_notified, &b_link, i);
+		insert_threads[i] = std::thread(insert_and_notify, &b_link, i);
+	}
+	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
+		insert_threads[i].join();
+		// do not uncomment the following line
+		//search_threads[i].join();
+	}
+}
+
 int main() {
-	run_test();
+
+	//PARCIAL TEST - RUN PERFECTLY
+	//run_test(); 
+	
+	//FINAL TEST
+	run_parallel_asynchronous_test();
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	run_parallel_synchronous_test();
 	return 0;
 }

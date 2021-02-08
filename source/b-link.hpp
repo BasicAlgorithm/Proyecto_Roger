@@ -8,6 +8,7 @@
 #include <string>
 
 #define MAX 6 //sometimes we need more space before split and avoid find out null pointers
+int cantidadNodos = 0;
 
 namespace EDA {
 	namespace Concurrent {
@@ -23,10 +24,13 @@ namespace EDA {
 				Nodo* link;
 				data_type arrayValoresHijos[MAX];
 				Nodo* arrayPunterosHijos[MAX];
+				int nodoID;
 				Nodo() {
 					cantidadHijos = 0;
 					nodoPadre = NULL;
 					link = NULL;
+					cantidadNodos++;
+					nodoID = cantidadNodos;
 					for (data_type i = 0; i < MAX; i++) {
 						arrayValoresHijos[i] = INT_MAX;
 						arrayPunterosHijos[i] = NULL;
@@ -56,13 +60,41 @@ namespace EDA {
 				b = tmp;
 			}
 
-			bool search(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) const {
+			bool search(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) const	 {
+				if (mensaje != "not_print")std::cout << " |searching_value=" << valorABuscar << "_id=" << mensaje << "_| " << std::endl;
+
 				if (!nodoActual) nodoActual = rootNodo; // only once over here
 				
 				for (int tmpIndex = 0; tmpIndex <= nodoActual->cantidadHijos; tmpIndex++) {
 
 					if (valorABuscar == nodoActual->arrayValoresHijos[tmpIndex]) {
-						if (mensaje != "not_print")std::cout << " |found_it/id=" << mensaje << "/value=" << valorABuscar << "| ";
+						if (mensaje != "not_print")std::cout << " |found_it_id=" << mensaje << "_value=" << valorABuscar << "| ";
+						return true;
+					}
+					if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && nodoActual->arrayPunterosHijos[tmpIndex]) {
+						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[tmpIndex]);
+					}
+					else if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && !nodoActual->arrayPunterosHijos[tmpIndex]) {
+						//std::cout << " |NO_1_id_" << mensaje << "_" << valorABuscar << "_| ";
+						return false;
+					}
+				}
+				if (nodoActual->cantidadHijos == CANTIDAD_PUNTEROS_MAX) {
+					return search(valorABuscar, mensaje, nodoActual);
+				}
+				//std::cout << " |NO_2_id_" << mensaje << "_" << valorABuscar << "_| ";
+				return false;
+			}
+
+			bool search_(data_type valorABuscar, std::string mensaje = "sin_mensaje", Nodo* nodoActual = NULL) const	 {
+				if (mensaje != "not_print")std::cout << " |searching_value=" << valorABuscar << "_id=" << mensaje << "_| " << std::endl;
+
+				if (!nodoActual) nodoActual = rootNodo; // only once over here
+				
+				for (int tmpIndex = 0; tmpIndex <= nodoActual->cantidadHijos; tmpIndex++) {
+
+					if (valorABuscar == nodoActual->arrayValoresHijos[tmpIndex]) {
+						if (mensaje != "not_print")std::cout << " |found_it_id=" << mensaje << "_value=" << valorABuscar << "| ";
 						return true;
 					}
 					if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && nodoActual->arrayPunterosHijos[tmpIndex]) {
@@ -106,8 +138,7 @@ namespace EDA {
 
 				data_type valorQueAsciende = nodoDerecho->arrayValoresHijos[0];
 
-				//SI NO HAY PADRE
-				if (!nodoWorkerIzquierdo->nodoPadre) {
+				if (!nodoWorkerIzquierdo->nodoPadre) { //SI NO HAY PADRE
 					Nodo* nodoPadre = new Nodo();
 					nodoPadre->nodoPadre = NULL;
 					nodoPadre->cantidadHijos = 1;
@@ -144,7 +175,7 @@ namespace EDA {
 					nodoWorkerIzquierdo->arrayPunterosHijos[tmp01] = nodoDerecho;
 
 					for (tmp01 = 0; nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]; tmp01++) {
-						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;
+						nodoWorkerIzquierdo->arrayPunterosHijos[tmp01]->nodoPadre = nodoWorkerIzquierdo;//error here
 					}
 				}
 
@@ -225,18 +256,19 @@ namespace EDA {
 
 			}
 
-			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {//const data_type& 
-				//std::cout << " |direct_insert_id=" + mensaje + "_val_"<<val<<"| ";
-				if (search(valueToInsert, mensaje)) {
+			void insert_(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {
+				
+				if (mensaje != "not_print")std::cout << " valueToInsert inside " << valueToInsert << std::endl;
+
+				if (search_(valueToInsert, mensaje)) {
 					//std::cout << " |Reyect_" << valueToInsert <<"_id_"<< mensaje <<"| "<< "\n";
 					return;
 				}
-				if (mensaje != "not_print")std::cout << " valorIngresado_insert = " << valueToInsert << " ID = " << mensaje << "\n";
 				if (!nodoWorkerIzquierdo) nodoWorkerIzquierdo = rootNodo;
 
 				for (data_type tmpIndex = 0; tmpIndex <= nodoWorkerIzquierdo->cantidadHijos; tmpIndex++) {
 					if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
-						insert(valueToInsert, mensaje, nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
+						insert_(valueToInsert, mensaje, nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
 						if (nodoWorkerIzquierdo->cantidadHijos == CANTIDAD_PUNTEROS_MAX)
 							separadorConHijos(nodoWorkerIzquierdo);
 						return;
@@ -254,7 +286,7 @@ namespace EDA {
 
 					separadorHojasSinHijos(nodoWorkerIzquierdo);
 				}
-
+				if (mensaje != "not_print")std::cout << " |ValorInsertado=" << valueToInsert << "_id=" << mensaje << "_| " << std::endl;
 			}
 
 			void eliminar(const data_type& arrayValoresHijos) {}
@@ -304,6 +336,16 @@ namespace EDA {
 
 			}
 
+			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {
+				mtx.lock();
+
+				//std::cout << "|INGRESO " << valueToInsert<< std::endl;
+				insert_(valueToInsert, mensaje);
+				//std::cout << " SALIO|" << std::endl;
+
+				mtx.unlock();
+			}
+
 			void print() {
 				if (empty()) {
 					std::cout << "\n ---------------------- " << "\n";
@@ -325,7 +367,7 @@ namespace EDA {
 
 			Nodo* rootNodo = new Nodo();
 			int CANTIDAD_PUNTEROS_MAX = B + 1;
-			data_type cantidadDatos;
+			std::mutex mtx;
 		};
 
 	}  // namespace Concurrent
