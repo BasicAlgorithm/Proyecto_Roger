@@ -19,7 +19,7 @@ int MAX_VALUE = 15000;
 std::random_device rd;
 
 void test(EDA::Concurrent::BLinkTree<3, int>* b_link) {
-	std::string mensaje = "not_print"; // to avoid print repeteded insert with ***SI***
+	std::string mensaje = "not_print"; // to avoid print repeteded 
 	b_link->insert(19, mensaje);
 	b_link->insert(31, mensaje);
 	b_link->insert(34, mensaje);
@@ -117,11 +117,6 @@ void sequential_insert(EDA::Concurrent::BLinkTree<3, int>* b_link) {
 		
 		b_link->insert(distribution(rd),mensaje);
 	}//RANDOM INSERT
-
-	//TEST UNIT WITH FULL PRINTED TO PROVE B-LINK TREE WORK
-	//test(b_link);
-	//TEST UNIT
-	
 }
 
 void run_test() {
@@ -132,7 +127,7 @@ void run_test() {
 	//PRINT b-link tree
 	//b_link.print();
 	//PRINT b-link tree
-
+	
 	std::thread* threads = new std::thread[NUMBER_THREADS];
 
 	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
@@ -141,6 +136,12 @@ void run_test() {
 	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
 		threads[i].join();
 	}
+	
+	//TEST UNIT WITH FULL PRINTED TO PROVE B-LINK TREE WORK
+	//test(b_link);
+	//TEST UNIT
+
+	//std::cout << "nodos = " << cantidadNodos << "\n";
 }
 
 //FINAL TEST ALL ABOVE FROM HERE
@@ -191,6 +192,12 @@ void run_parallel_asynchronous_test() {
 		insert_threads[i].join();
 		search_threads[i].join();
 	}
+	
+	//PRINT b-link tree
+	//b_link.print();
+	//PRINT b-link tree
+	//std::cout << "nodos = " << cantidadNodos << "\n";
+
 }
 
 int* LAST_VALUE_INSERTED;
@@ -251,7 +258,7 @@ void search_when_notified(EDA::Concurrent::BLinkTree<3, int>* b_link, int id) {
 
 		//std::cout << "----------------------------------------------------------- INSIDE" << std::endl;
 
-		//std::cout << "Searcher: " << LAST_VALUE_INSERTED[id] << "\n";
+		std::cout << "Searcher: " << LAST_VALUE_INSERTED[id] << "\n";
 		
 		// to track operation_id
 		//std::string mensaje = std::to_string(id) + "_searcher";
@@ -294,6 +301,12 @@ void run_parallel_synchronous_test() {
 		// do not uncomment the following line
 		//search_threads[i].join();
 	}
+	
+
+	//PRINT b-link tree
+	b_link.print();
+	//PRINT b-link tree
+	std::cout << "nodos = " << cantidadNodos << "\n";
 }
 
 int main() {
@@ -302,8 +315,9 @@ int main() {
 	//run_test(); 
 	
 	//FINAL TEST
-	run_parallel_asynchronous_test();
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	//run_parallel_asynchronous_test();
+	//std::this_thread::sleep_for(std::chrono::seconds(1));
 	run_parallel_synchronous_test();
+
 	return 0;
 }

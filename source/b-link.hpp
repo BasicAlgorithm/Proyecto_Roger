@@ -18,6 +18,8 @@ namespace EDA {
 		public:
 			typedef Type data_type;
 
+			//int* cantidadNodos_ = &cantidadNodos;
+
 			struct Nodo {
 				data_type cantidadHijos;
 				Nodo* nodoPadre;
@@ -30,6 +32,7 @@ namespace EDA {
 					nodoPadre = NULL;
 					link = NULL;
 					cantidadNodos++;
+					//std::cout << "     AUMENTANDO GLOBAL EN +1 = " << cantidadNodos << "\n";
 					nodoID = cantidadNodos;
 					for (data_type i = 0; i < MAX; i++) {
 						arrayValoresHijos[i] = INT_MAX;
@@ -38,14 +41,18 @@ namespace EDA {
 				}
 			};
 
+			Nodo* rootNodo = new Nodo();
+			int CANTIDAD_PUNTEROS_MAX = B + 1;
+			std::mutex mtx;
+
 			BLinkTree() {}
 
 			~BLinkTree() { delete[] rootNodo; }
 
 			std::size_t size() const { return cantidadDatos; }
 
-			bool empty() const {
-				if (rootNodo->cantidadHijos) return true; else { return false; }
+			bool is_empty() const {
+				if (rootNodo->cantidadHijos) return false; else { return true; }
 			}
 
 			void swap(data_type& a, data_type& b) {
@@ -321,6 +328,9 @@ namespace EDA {
 					}
 
 					//if (nodoParaImprimir.back()->arrayValoresHijos[j]==)
+					std::cout << "||ID=";
+					std::cout << nodoImprimiendose->nodoID;
+					std::cout << "||";
 					std::cout << "}   ";
 				}std::cout << std::endl;
 
@@ -347,7 +357,7 @@ namespace EDA {
 			}
 
 			void print() {
-				if (empty()) {
+				if (is_empty()) {
 					std::cout << "\n ---------------------- " << "\n";
 					std::cout << "     B-LINK TREE EMPTY" << "\n";
 					std::cout << "\n ---------------------- " << "\n";
@@ -364,10 +374,6 @@ namespace EDA {
 					std::cout << " ---------------------------------------------------------------------------------------------------------- " << "\n";
 				}
 			}
-
-			Nodo* rootNodo = new Nodo();
-			int CANTIDAD_PUNTEROS_MAX = B + 1;
-			std::mutex mtx;
 		};
 
 	}  // namespace Concurrent
