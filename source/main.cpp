@@ -146,14 +146,14 @@ void run_test() {
 
 //FINAL TEST ALL ABOVE FROM HERE
 
-void parallel_insert(EDA::Concurrent::BLinkTree<3, int>* b_link) {
+void parallel_insert(EDA::Concurrent::BLinkTree<3, int>* b_link,size_t id) {
 	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
 	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
 		int value = distribution(rd);
 		//std::cout << value << "| \n";
 		
 		// to track operation_id
-		//std::string mensaje = std::to_string(i) + "_inserter";
+		//std::string mensaje = std::to_string(id) + "_inserter";
 
 		// to avoid print repeteded insert with ***SI***
 		std::string mensaje = "not_print";
@@ -185,7 +185,7 @@ void run_parallel_asynchronous_test() {
 	std::thread* search_threads = new std::thread[NUMBER_THREADS];
 
 	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
-		insert_threads[i] = std::thread(parallel_insert, &b_link);
+		insert_threads[i] = std::thread(parallel_insert, &b_link,i);
 		search_threads[i] = std::thread(parallel_search, &b_link);
 	}
 	for (std::size_t i = 0; i < NUMBER_THREADS; ++i) {
@@ -204,27 +204,20 @@ int* LAST_VALUE_INSERTED;
 std::mutex* MUTEX;
 std::condition_variable* VALUE_INSERTED;
 
-//NEW IMPLEMENTATION
-//bool ready = false;
-//bool processed = false;
-//NEW IMPLEMENTATION
 
 void insert_and_notify(EDA::Concurrent::BLinkTree<3, int>* b_link, int id) {
 	std::uniform_int_distribution<int> distribution(MIN_VALUE, MAX_VALUE);
 	for (std::size_t i = 0; i < NUMBER_OPERATIONS; ++i) {
 		std::unique_lock<std::mutex> lock(MUTEX[id]); 
 		
-		//NEW IMPLEMENTATION
-		//ready = true;
-		//NEW IMPLEMENTATION
-
 		int value = distribution(rd);
 
+		//IMPLEMENTATION OF MESSAGE
 		// to track operation_id
 		//std::string mensaje = std::to_string(id) + "_inserter";
-
 		// to avoid print repeteded insert with ***SI***
 		std::string mensaje = "not_print";
+		//IMPLEMENTATION OF MESSAGE
 
 		b_link->insert(value, mensaje);
 		
@@ -258,27 +251,20 @@ void search_when_notified(EDA::Concurrent::BLinkTree<3, int>* b_link, int id) {
 
 		//std::cout << "----------------------------------------------------------- INSIDE" << std::endl;
 
-		std::cout << "Searcher: " << LAST_VALUE_INSERTED[id] << "\n";
+		//std::cout << "Searcher: " << LAST_VALUE_INSERTED[id] << "\n";
 		
+		//IMPLEMENTATION OF MESSAGE
 		// to track operation_id
 		//std::string mensaje = std::to_string(id) + "_searcher";
-
 		// to avoid print repeteded insert with ***SI***
 		std::string mensaje = "not_print";
+		//IMPLEMENTATION OF MESSAGE
 
 		if (!b_link->search(LAST_VALUE_INSERTED[id], mensaje)) {
-		//std::cout << LAST_VALUE_INSERTED[id] << "\n";
 		  std::stringstream stream;
 		 stream << " Value not found in B Link: " << LAST_VALUE_INSERTED[id]<< "\n";
 		  std::cerr << stream.str() << "\n";
 		}
-
-		//NEW IMPLEMENTATION
-		//ready = false;
-		//processed = true;
-		//lock.unlock();
-		//VALUE_INSERTED[id].notify_one();
-		//NEW IMPLEMENTATION
 	}
 }
 
@@ -304,9 +290,9 @@ void run_parallel_synchronous_test() {
 	
 
 	//PRINT b-link tree
-	b_link.print();
+	//b_link.print();
 	//PRINT b-link tree
-	std::cout << "nodos = " << cantidadNodos << "\n";
+	//std::cout << "nodos = " << cantidadNodos << "\n";
 }
 
 int main() {
@@ -315,9 +301,9 @@ int main() {
 	//run_test(); 
 	
 	//FINAL TEST
-	//run_parallel_asynchronous_test();
+	run_parallel_asynchronous_test();
 	//std::this_thread::sleep_for(std::chrono::seconds(1));
 	run_parallel_synchronous_test();
-
+	
 	return 0;
 }

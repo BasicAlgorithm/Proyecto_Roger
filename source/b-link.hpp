@@ -9,6 +9,11 @@
 
 #define MAX 6 //sometimes we need more space before split and avoid find out null pointers
 int cantidadNodos = 0;
+std::mutex* MUTEX_B = new std::mutex[50000];
+std::condition_variable* VALUE_INSERTED_B = new std::condition_variable[50000];
+int key=0;
+
+bool ready[50000] = { true,true,true,true,true,true,true };
 
 namespace EDA {
 	namespace Concurrent {
@@ -18,8 +23,6 @@ namespace EDA {
 		public:
 			typedef Type data_type;
 
-			//int* cantidadNodos_ = &cantidadNodos;
-
 			struct Nodo {
 				data_type cantidadHijos;
 				Nodo* nodoPadre;
@@ -27,6 +30,7 @@ namespace EDA {
 				data_type arrayValoresHijos[MAX];
 				Nodo* arrayPunterosHijos[MAX];
 				int nodoID;
+				bool lockNode = true;
 				Nodo() {
 					cantidadHijos = 0;
 					nodoPadre = NULL;
@@ -82,6 +86,16 @@ namespace EDA {
 						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[tmpIndex]);
 					}
 					else if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && !nodoActual->arrayPunterosHijos[tmpIndex]) {
+
+						//NEW IMPLEMENTATION
+						if (nodoActual->link && valorABuscar > nodoActual->link->arrayValoresHijos[0]) {
+							tmpIndex = -1;
+							//nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
+							nodoActual = nodoActual->link;
+							continue;
+						}
+						//NEW IMPLEMENTATION
+
 						//std::cout << " |NO_1_id_" << mensaje << "_" << valorABuscar << "_| ";
 						return false;
 					}
@@ -105,7 +119,7 @@ namespace EDA {
 						return true;
 					}
 					if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && nodoActual->arrayPunterosHijos[tmpIndex]) {
-						return search(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[tmpIndex]);
+						return search_(valorABuscar, mensaje, nodoActual->arrayPunterosHijos[tmpIndex]);
 					}
 					else if (valorABuscar < nodoActual->arrayValoresHijos[tmpIndex] && !nodoActual->arrayPunterosHijos[tmpIndex]) {
 						//std::cout << " |NO_1_id_" << mensaje << "_" << valorABuscar << "_| ";
@@ -113,7 +127,7 @@ namespace EDA {
 					}
 				}
 				if (nodoActual->cantidadHijos == CANTIDAD_PUNTEROS_MAX) {
-					return search(valorABuscar, mensaje, nodoActual);
+					return search_(valorABuscar, mensaje, nodoActual);
 				}
 				//std::cout << " |NO_2_id_" << mensaje << "_" << valorABuscar << "_| ";
 				return false;
@@ -267,20 +281,62 @@ namespace EDA {
 				
 				if (mensaje != "not_print")std::cout << " valueToInsert inside " << valueToInsert << std::endl;
 
-				if (search_(valueToInsert, mensaje)) {
-					//std::cout << " |Reyect_" << valueToInsert <<"_id_"<< mensaje <<"| "<< "\n";
-					return;
+				if (!nodoWorkerIzquierdo) { 
+					//NEW IMPLEMENTATION
+
+					//std::cout << " *WAITING_SOY" << "_id=" << mensaje << "_WITH" << "_value=" << valueToInsert << std::endl;
+					std::unique_lock<std::mutex> lock(MUTEX_B[0]);
+					VALUE_INSERTED_B[0].wait(lock, [&] { return ready[0]; });
+
+					nodoWorkerIzquierdo = rootNodo;
+					ready[0] = false; key = nodoWorkerIzquierdo->nodoID;
+
+					//std::cout << " Soy el valor_" << valueToInsert << "TENGO PERMISO PARA ENTRAR" << "_id=" << mensaje << "_| " << std::endl;
+					//NEW IMPLEMENTATION
+
 				}
-				if (!nodoWorkerIzquierdo) nodoWorkerIzquierdo = rootNodo;
+
+				//NEW IMPLEMENTATION
+				//std::cout << " *ready[nodoWorkerIzquierdo->nodoID] " << ready[nodoWorkerIzquierdo->nodoID] << " "<< nodoWorkerIzquierdo->nodoID<<std::endl;
+
+				if (nodoWorkerIzquierdo->nodoPadre && nodoWorkerIzquierdo->cantidadHijos!=3) {
+					ready[nodoWorkerIzquierdo->nodoPadre->nodoID] = true;
+					VALUE_INSERTED_B[nodoWorkerIzquierdo->nodoPadre->nodoID].notify_one();
+
+				//std::cout << " Soy el valor_" << valueToInsert << "LIBERO AL PADRE" << "_id=" << mensaje << "_| " << std::endl;
+				}
+
+				//Nodo* main_nodo = nodoWorkerIzquierdo;
+				//NEW IMPLEMENTATION
+
 
 				for (data_type tmpIndex = 0; tmpIndex <= nodoWorkerIzquierdo->cantidadHijos; tmpIndex++) {
 					if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
 						insert_(valueToInsert, mensaje, nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]);
 						if (nodoWorkerIzquierdo->cantidadHijos == CANTIDAD_PUNTEROS_MAX)
 							separadorConHijos(nodoWorkerIzquierdo);
+						
+						//NEW IMPLEMENTATION
+							ready[nodoWorkerIzquierdo->nodoID] = true;
+							//VALUE_INSERTED_B[nodoWorkerIzquierdo->nodoID].notify_one();
+							if (key == nodoWorkerIzquierdo->nodoID) {
+								ready[0] = true;
+								VALUE_INSERTED_B[0].notify_one();
+							}
+							//std::cout << " Soy el valor_" << valueToInsert << "LIBERO LA HOJA RETURN" << "_id=" << mensaje << "_| " << std::endl;
+						//NEW IMPLEMENTATION
+						
 						return;
 					}
 					else if (valueToInsert < nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex] && !nodoWorkerIzquierdo->arrayPunterosHijos[tmpIndex]) {
+						//NEW IMPLEMENTATION
+						if (nodoWorkerIzquierdo->link && valueToInsert > nodoWorkerIzquierdo->link->arrayValoresHijos[0]) {
+							tmpIndex = -1;
+							nodoWorkerIzquierdo = nodoWorkerIzquierdo->nodoPadre;
+							//nodoWorkerIzquierdo = nodoWorkerIzquierdo->link;
+							continue;
+						}
+						//NEW IMPLEMENTATION
 						swap(nodoWorkerIzquierdo->arrayValoresHijos[tmpIndex], valueToInsert);
 						if (tmpIndex == nodoWorkerIzquierdo->cantidadHijos) {
 							nodoWorkerIzquierdo->cantidadHijos++;
@@ -290,9 +346,21 @@ namespace EDA {
 				}
 
 				if (nodoWorkerIzquierdo->cantidadHijos == CANTIDAD_PUNTEROS_MAX) {
-
 					separadorHojasSinHijos(nodoWorkerIzquierdo);
 				}
+				//NEW IMPLEMENTATION
+				//print();
+
+				ready[nodoWorkerIzquierdo->nodoID] = true;
+				//VALUE_INSERTED_B[nodoWorkerIzquierdo->nodoID].notify_one();
+				if (key == nodoWorkerIzquierdo->nodoID) {
+					ready[0] = true;
+					VALUE_INSERTED_B[0].notify_one();
+				}
+				//std::cout << " Soy el valor_" << valueToInsert << "LIBERO LA HOJA RETURN" << "_id=" << mensaje << "_| " << std::endl;
+				
+				//NEW IMPLEMENTATION
+
 				if (mensaje != "not_print")std::cout << " |ValorInsertado=" << valueToInsert << "_id=" << mensaje << "_| " << std::endl;
 			}
 
@@ -347,13 +415,16 @@ namespace EDA {
 			}
 
 			void insert(data_type valueToInsert, std::string mensaje = "sin_mensaje", Nodo* nodoWorkerIzquierdo = NULL) {
-				mtx.lock();
 
-				//std::cout << "|INGRESO " << valueToInsert<< std::endl;
+				if (search_(valueToInsert, mensaje)) {
+					//std::cout << " |Reyect_" << valueToInsert <<"_id_"<< mensaje <<"| "<< "\n";
+					return;
+				}
+
+				//std::cout << " INGRESO_" << std::endl;
 				insert_(valueToInsert, mensaje);
-				//std::cout << " SALIO|" << std::endl;
+				//std::cout << " SALIO_"<< valueToInsert << "|"<<std::endl;
 
-				mtx.unlock();
 			}
 
 			void print() {
