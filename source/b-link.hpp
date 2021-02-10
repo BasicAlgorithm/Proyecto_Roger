@@ -55,6 +55,232 @@ namespace EDA {
 
 			std::size_t size() const { return cantidadDatos; }
 
+			void redistribucionNodos(Nodo* nodoIzquierdo, Nodo* nodoDerecho, bool es_hoja, int posOfnodoIzquierdo, int cualNodo) {
+
+				int valorToDeleteor_anterior = nodoDerecho->arrayvalorToDeleteoresHijos[0];
+
+
+				if (cualNodo == 0) {
+
+					if (!es_hoja) {
+						nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos] = nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo];
+						nodoIzquierdo->arrayPunterosHijos[nodoIzquierdo->cantidadHijos + 1] = nodoDerecho->arrayPunterosHijos[0];
+						nodoIzquierdo->cantidadHijos++;
+						nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo] = nodoDerecho->arrayvalorToDeleteoresHijos[0];
+						memcpy(&nodoDerecho->arrayvalorToDeleteoresHijos[0], &nodoDerecho->arrayvalorToDeleteoresHijos[1], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
+						memcpy(&nodoDerecho->arrayPunterosHijos[0], &nodoDerecho->arrayPunterosHijos[1], sizeof(rootNodo) * (nodoDerecho->cantidadHijos + 1));
+						nodoDerecho->cantidadHijos--;
+
+					}
+					else {
+						nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos] = nodoDerecho->arrayvalorToDeleteoresHijos[0];
+						nodoIzquierdo->cantidadHijos++;
+						memcpy(&nodoDerecho->arrayvalorToDeleteoresHijos[0], &nodoDerecho->arrayvalorToDeleteoresHijos[1], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
+						nodoDerecho->cantidadHijos--;
+
+						nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo] = nodoDerecho->arrayvalorToDeleteoresHijos[0];
+					}
+
+
+
+				}
+				else {
+
+					if (!es_hoja) {
+
+						memcpy(&nodoDerecho->arrayvalorToDeleteoresHijos[1], &nodoDerecho->arrayvalorToDeleteoresHijos[0], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
+						memcpy(&nodoDerecho->arrayPunterosHijos[1], &nodoDerecho->arrayPunterosHijos[0], sizeof(rootNodo) * (nodoDerecho->cantidadHijos + 1));
+						nodoDerecho->arrayvalorToDeleteoresHijos[0] = nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo];
+						nodoDerecho->arrayPunterosHijos[0] = nodoIzquierdo->arrayPunterosHijos[nodoIzquierdo->cantidadHijos];
+
+						nodoDerecho->cantidadHijos++;
+
+						nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo] = nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos - 1];
+						nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos - 1] = INT_MAX;
+						nodoIzquierdo->arrayPunterosHijos[nodoIzquierdo->cantidadHijos] = NULL;
+						nodoIzquierdo->cantidadHijos--;
+
+					}
+					else {
+
+						memcpy(&nodoDerecho->arrayvalorToDeleteoresHijos[1], &nodoDerecho->arrayvalorToDeleteoresHijos[0], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
+						nodoDerecho->arrayvalorToDeleteoresHijos[0] = nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos - 1];
+						nodoDerecho->cantidadHijos++;
+
+						nodoIzquierdo->arrayvalorToDeleteoresHijos[nodoIzquierdo->cantidadHijos - 1] = INT_MAX;
+						nodoIzquierdo->cantidadHijos--;
+
+						nodoIzquierdo->nodoPadre->arrayvalorToDeleteoresHijos[posOfnodoIzquierdo] = nodoDerecho->arrayvalorToDeleteoresHijos[0];
+					}
+				}
+			}
+
+			void juntarNodos(Nodo* nodoIzquierdo, Nodo* nodoDerecho, bool es_hoja, int posOfnodoDerecho) {
+
+				if (!es_hoja) {
+
+					nodoIzquierdo->valorToDeleteue[nodoIzquierdo->cantidadHijos] = nodoIzquierdo->nodoPadre->valorToDeleteue[posOfnodoDerecho - 1];
+					nodoIzquierdo->cantidadHijos++;
+				}
+
+				memcpy(&nodoIzquierdo->valorToDeleteue[nodoIzquierdo->cantidadHijos], &nodoDerecho->valorToDeleteue[0], sizeof(int) * (nodoDerecho->cantidadHijos + 1));
+				memcpy(&nodoIzquierdo->arrayPunterosHijos[nodoIzquierdo->cantidadHijos], &nodoDerecho->arrayPunterosHijos[0], sizeof(rootNodo) * (nodoDerecho->cantidadHijos + 1));
+
+
+				nodoIzquierdo->cantidadHijos += nodoDerecho->cantidadHijos;
+
+
+				memcpy(&nodoIzquierdo->nodoPadre->valorToDeleteue[posOfnodoDerecho - 1], &nodoIzquierdo->nodoPadre->valorToDeleteue[posOfnodoDerecho], sizeof(int) * (nodoIzquierdo->nodoPadre->cantidadHijos + 1));
+				memcpy(&nodoIzquierdo->nodoPadre->arrayPunterosHijos[posOfnodoDerecho], &nodoIzquierdo->nodoPadre->arrayPunterosHijos[posOfnodoDerecho + 1], sizeof(rootNodo) * (nodoIzquierdo->nodoPadre->cantidadHijos + 1));
+				nodoIzquierdo->nodoPadre->cantidadHijos--;
+
+				for (int i = 0; nodoIzquierdo->arrayPunterosHijos[i] != NULL; i++) {
+					nodoIzquierdo->arrayPunterosHijos[i]->nodoPadre = nodoIzquierdo;
+				}
+
+
+
+			}
+
+			bool datoEncontrado;
+
+			void borrarNodo(Nodo* nodoBorrandose, int valorToDelete, int posicionNodo) {
+
+				bool es_hoja;
+				if (nodoBorrandose->arrayPunterosHijos[0] == NULL)
+					es_hoja = true;
+				else es_hoja = false;
+
+				int previoValorToDelete = nodoBorrandose->valorToDeleteue[0];
+
+
+
+				for (int i = 0; datoEncontrado == false && i <= nodoBorrandose->cantidadHijos; i++) {
+					if (valorToDelete < nodoBorrandose->valorToDeleteue[i] && nodoBorrandose->arrayPunterosHijos[i] != NULL) {
+						borrarNodo(nodoBorrandose->arrayPunterosHijos[i], valorToDelete, i);
+
+					}
+					else if (valorToDelete == nodoBorrandose->valorToDeleteue[i] && nodoBorrandose->arrayPunterosHijos[i] == NULL) {
+
+						memcpy(&nodoBorrandose->valorToDeleteue[i], &nodoBorrandose->valorToDeleteue[i + 1], sizeof(int) * (nodoBorrandose->cantidadHijos + 1));
+						nodoBorrandose->cantidadHijos--;
+						datoEncontrado = true;
+						break;
+					}
+				}
+
+				if (nodoBorrandose->nodoPadre == NULL && nodoBorrandose->arrayPunterosHijos[0] == NULL) {
+					return;
+				}
+
+
+				if (nodoBorrandose->nodoPadre == NULL && nodoBorrandose->arrayPunterosHijos[0] != NULL && nodoBorrandose->cantidadHijos == 0) {
+					rootNodo = nodoBorrandose->arrayPunterosHijos[0];
+					rootNodo->nodoPadre = NULL;
+					return;
+				}
+
+
+				if (es_hoja && nodoBorrandose->nodoPadre != NULL) {
+
+					if (posicionNodo == 0) {
+						Nodo* nodoDerecho = new Nodo();
+						nodoDerecho = nodoBorrandose->nodoPadre->arrayPunterosHijos[1];
+
+						if (nodoDerecho != NULL && nodoDerecho->cantidadHijos > (numeroPunteros + 1) / 2) {
+
+							redistribucionNodos(nodoBorrandose, nodoDerecho, es_hoja, 0, 0);
+						}
+						else if (nodoDerecho != NULL && nodoBorrandose->cantidadHijos + nodoDerecho->cantidadHijos < numeroPunteros) {
+
+							juntarNodos(nodoBorrandose, nodoDerecho, es_hoja, 1);
+						}
+					}
+
+					else {
+
+
+						Nodo* nodoIzquierdo = new Nodo();
+						Nodo* nodoDerecho = new Nodo();
+
+
+						nodoIzquierdo = nodoBorrandose->nodoPadre->arrayPunterosHijos[posicionNodo - 1];
+
+						nodoDerecho = nodoBorrandose->nodoPadre->arrayPunterosHijos[posicionNodo + 1];
+
+
+						if (nodoIzquierdo != NULL && nodoIzquierdo->cantidadHijos > (numeroPunteros + 1) / 2) {
+							redistribucionNodos(nodoIzquierdo, nodoBorrandose, es_hoja, posicionNodo - 1, 1);
+						}
+						else if (nodoDerecho != NULL && nodoDerecho->cantidadHijos > (numeroPunteros + 1) / 2) {
+							redistribucionNodos(nodoBorrandose, nodoDerecho, es_hoja, posicionNodo, 0);
+						}
+						else if (nodoIzquierdo != NULL && nodoBorrandose->cantidadHijos + nodoIzquierdo->cantidadHijos < numeroPunteros) {
+							juntarNodos(nodoIzquierdo, nodoBorrandose, es_hoja, posicionNodo);
+						}
+						else if (nodoDerecho != NULL && nodoBorrandose->cantidadHijos + nodoDerecho->cantidadHijos < numeroPunteros) {
+							juntarNodos(nodoBorrandose, nodoDerecho, es_hoja, posicionNodo + 1);
+						}
+					}
+				}
+				else if (!es_hoja && nodoBorrandose->nodoPadre != NULL) {
+
+					if (posicionNodo == 0) {
+						Nodo* nodoDerecho = new Nodo();
+						nodoDerecho = nodoBorrandose->nodoPadre->arrayPunterosHijos[1];
+
+						if (nodoDerecho != NULL && nodoDerecho->cantidadHijos - 1 >= ceil((numeroPunteros - 1) / 2)) {
+							redistribucionNodos(nodoBorrandose, nodoDerecho, es_hoja, 0, 0);
+						}
+						else if (nodoDerecho != NULL && nodoBorrandose->cantidadHijos + nodoDerecho->cantidadHijos < numeroPunteros - 1) {
+							juntarNodos(nodoBorrandose, nodoDerecho, es_hoja, 1);
+						}
+					}
+					else {
+
+
+						Nodo* nodoIzquierdo = new Nodo();
+						Nodo* nodoDerecho = new Nodo();
+
+
+						nodoIzquierdo = nodoBorrandose->nodoPadre->arrayPunterosHijos[posicionNodo - 1];
+
+						nodoDerecho = nodoBorrandose->nodoPadre->arrayPunterosHijos[posicionNodo + 1];
+
+
+						if (nodoIzquierdo != NULL && nodoIzquierdo->cantidadHijos - 1 >= ceil((numeroPunteros - 1) / 2)) {
+							redistribucionNodos(nodoIzquierdo, nodoBorrandose, es_hoja, posicionNodo - 1, 1);
+						}
+						else if (nodoDerecho != NULL && nodoDerecho->cantidadHijos - 1 >= ceil((numeroPunteros - 1) / 2)) {
+							redistribucionNodos(nodoBorrandose, nodoDerecho, es_hoja, posicionNodo, 0);
+						}
+
+						else if (nodoIzquierdo != NULL && nodoBorrandose->cantidadHijos + nodoIzquierdo->cantidadHijos < numeroPunteros - 1) {
+							juntarNodos(nodoIzquierdo, nodoBorrandose, es_hoja, posicionNodo);
+						}
+						else if (nodoDerecho != NULL && nodoBorrandose->cantidadHijos + nodoDerecho->cantidadHijos < numeroPunteros - 1) {
+							juntarNodos(nodoBorrandose, nodoDerecho, es_hoja, posicionNodo + 1);
+						}
+					}
+
+				}
+
+
+
+				Nodo* tempNodo = new Nodo();
+				tempNodo = nodoBorrandose->nodoPadre;
+				while (tempNodo != NULL) {
+					for (int i = 0; i < tempNodo->cantidadHijos; i++) {
+						if (tempNodo->valorToDeleteue[i] == previoValorToDelete) {
+							tempNodo->valorToDeleteue[i] = nodoBorrandose->valorToDeleteue[0];
+							break;
+						}
+					}
+					tempNodo = tempNodo->nodoPadre;
+				}
+
+			}
+
 			bool is_empty() const {
 				if (rootNodo->cantidadHijos) return false; else { return true; }
 			}
